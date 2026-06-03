@@ -530,9 +530,33 @@ async function exportarWord() {
       return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
     }
 
+    // Solo fechas DD/MM/AAAA, el resto vacío
+    function soloFecha(str) {
+      if (!str) return {d:"",m:"",a:""};
+      var m = String(str).trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if (m) return {d:m[1].padStart(2,"0"), m:m[2].padStart(2,"0"), a:m[3]};
+      return {d:"",m:"",a:""};
+    }
+
     const AZ="1F4E79", AZ2="2E75B6", ALT="D6E4F0";
-    const WN=300,WL=480,WNM=1900,WCA=2800,WJU=1500,WD=340,WM=340,WA=500,WSA=800;
-    const COLS=[WN,WL,WNM,WCA,WJU,WD,WM,WA,WD,WM,WA,WD,WM,WA,WSA];
+
+    // A4 landscape: 16838 ancho, margenes 720 cada lado = 15398 disponible
+    // N°=300, Leg=480, Nom=1900, Sex=380, Causa=2600, Juz=1500
+    // D/M/A x3 = (340+340+500)*3 = 3540
+    // Salida=698 => total = 300+480+1900+380+2600+1500+3540+698 = 11398... necesito más
+    // Ajusto: Causa=3000, Juz=1700, Nom=2100, Salida=878
+    // 300+480+2100+380+3000+1700+3540+878 = 12378... aun falta
+    // Márgenes 360 cada lado = 16118 disponible
+    // Causa=3400, Juz=1900, Nom=2200, Salida=1000, Leg=550, N=320
+    // 320+550+2200+380+3400+1900+3540+1000 = 13290
+    // Con márgenes 360: 16838-720=16118
+    // Escalar todo: factor = 16118/13290 = 1.2128
+    // Redondeado: N=388, Leg=667, Nom=2668, Sex=461, Cau=4122, Juz=2304, D=412,M=412,A=606 x3=4290, Sal=1212
+    // Total = 388+667+2668+461+4122+2304+4290+1212 = 16112 ≈ OK
+
+    const WN=388, WL=667, WNM=2668, WSX=461, WCA=4122, WJU=2304;
+    const WD=412, WM=412, WA=606, WSA=1212;
+    const COLS=[WN,WL,WNM,WSX,WCA,WJU,WD,WM,WA,WD,WM,WA,WD,WM,WA,WSA];
     const TOTAL=COLS.reduce(function(a,b){return a+b;},0);
 
     function borde() {
@@ -567,7 +591,37 @@ async function exportarWord() {
             '<w:rPr>' +
               (bold ? '<w:b/>' : '') +
               '<w:color w:val="' + tc + '"/>' +
-              '<w:sz w:val="12"/><w:szCs w:val="12"/>' +
+              '<w:sz w:val="16"/><w:szCs w:val="16"/>' +
+              '<w:rFonts w:ascii="Arial" w:hAnsi="Arial"/>' +
+            '</w:rPr>' +
+            '<w:t xml:space="preserve">' + esc(txt) + '</w:t>' +
+          '</w:r>' +
+        '</w:p>' +
+      '</w:tc>';
+    }
+
+    function celdaDato(txt, w, fill, center) {
+      var al = center ? "center" : "left";
+      var fc = fill || "FFFFFF";
+      return '<w:tc>' +
+        '<w:tcPr>' +
+          '<w:tcW w:w="' + w + '" w:type="dxa"/>' +
+          '<w:shd w:val="clear" w:color="auto" w:fill="' + fc + '"/>' +
+          '<w:tcBorders>' + borde() + '</w:tcBorders>' +
+          '<w:vAlign w:val="center"/>' +
+          '<w:tcMar>' +
+            '<w:top w:w="30" w:type="dxa"/>' +
+            '<w:bottom w:w="30" w:type="dxa"/>' +
+            '<w:left w:w="60" w:type="dxa"/>' +
+            '<w:right w:w="60" w:type="dxa"/>' +
+          '</w:tcMar>' +
+        '</w:tcPr>' +
+        '<w:p>' +
+          '<w:pPr><w:jc w:val="' + al + '"/><w:spacing w:before="0" w:after="0"/></w:pPr>' +
+          '<w:r>' +
+            '<w:rPr>' +
+              '<w:color w:val="000000"/>' +
+              '<w:sz w:val="14"/><w:szCs w:val="14"/>' +
               '<w:rFonts w:ascii="Arial" w:hAnsi="Arial"/>' +
             '</w:rPr>' +
             '<w:t xml:space="preserve">' + esc(txt) + '</w:t>' +
@@ -594,22 +648,26 @@ async function exportarWord() {
       '</w:p>';
     }
 
-    var fHead1 = '<w:tr><w:trPr><w:tblHeader/></w:trPr>' +
+    // FILA ENCABEZADO 1
+    var fHead1 = '<w:tr><w:trPr><w:tblHeader/><w:trHeight w:val="400"/></w:trPr>' +
       celda("N\u00b0", WN, AZ, true, true, null, "FFFFFF") +
       celda("Legajo", WL, AZ, true, true, null, "FFFFFF") +
       celda("Apellido y Nombre", WNM, AZ, true, true, null, "FFFFFF") +
+      celda("Sexo", WSX, AZ, true, true, null, "FFFFFF") +
       celda("Causa / Condena", WCA, AZ, true, true, null, "FFFFFF") +
       celda("Juzgado Interviniente", WJU, AZ, true, true, null, "FFFFFF") +
       celda("Libertad Condicional", WD+WM+WA, AZ, true, true, 3, "FFFFFF") +
       celda("Libertad Asistida", WD+WM+WA, AZ, true, true, 3, "FFFFFF") +
       celda("Agotamiento de Pena", WD+WM+WA, AZ, true, true, 3, "FFFFFF") +
-      celda("Salida Transitoria / Modalidades", WSA, AZ, true, true, null, "FFFFFF") +
+      celda("Salida Transitoria Modalidades", WSA, AZ, true, true, null, "FFFFFF") +
     '</w:tr>';
 
-    var fHead2 = '<w:tr><w:trPr><w:tblHeader/></w:trPr>' +
+    // FILA ENCABEZADO 2
+    var fHead2 = '<w:tr><w:trPr><w:tblHeader/><w:trHeight w:val="300"/></w:trPr>' +
       celda("", WN, AZ2, true, true, null, "FFFFFF") +
       celda("", WL, AZ2, true, true, null, "FFFFFF") +
       celda("", WNM, AZ2, true, true, null, "FFFFFF") +
+      celda("", WSX, AZ2, true, true, null, "FFFFFF") +
       celda("", WCA, AZ2, true, true, null, "FFFFFF") +
       celda("", WJU, AZ2, true, true, null, "FFFFFF") +
       celda("D", WD, AZ2, true, true, null, "FFFFFF") +
@@ -624,28 +682,31 @@ async function exportarWord() {
       celda("", WSA, AZ2, true, true, null, "FFFFFF") +
     '</w:tr>';
 
+    // FILAS DE DATOS
     var filasDatos = internos.map(function(p, i) {
       var isAlt = i % 2 === 1;
       var fill = isAlt ? ALT : "FFFFFF";
-      var cond = parseFecha(p.condicional);
-      var asis = parseFecha(p.asistida);
-      var agot = parseFecha(p.agotamiento);
-      return '<w:tr>' +
-        celda(String(i+1), WN, fill, false, true) +
-        celda(p.legajo, WL, fill, false, true) +
-        celda(p.nombre, WNM, fill, false, false) +
-        celda(p.causa, WCA, fill, false, false) +
-        celda(p.juzgado, WJU, fill, false, false) +
-        celda(cond.d, WD, fill, false, true) +
-        celda(cond.m, WM, fill, false, true) +
-        celda(cond.a, WA, fill, false, true) +
-        celda(asis.d, WD, fill, false, true) +
-        celda(asis.m, WM, fill, false, true) +
-        celda(asis.a, WA, fill, false, true) +
-        celda(agot.d, WD, fill, false, true) +
-        celda(agot.m, WM, fill, false, true) +
-        celda(agot.a, WA, fill, false, true) +
-        celda(p.salida, WSA, fill, false, true) +
+      var cond = soloFecha(p.condicional);
+      var asis = soloFecha(p.asistida);
+      var agot = soloFecha(p.agotamiento);
+      var sexo = p.sexo || "M";
+      return '<w:tr><w:trPr><w:trHeight w:val="280" w:hRule="atLeast"/></w:trPr>' +
+        celdaDato(String(i+1), WN, fill, true) +
+        celdaDato(p.legajo, WL, fill, true) +
+        celdaDato(p.nombre, WNM, fill, false) +
+        celdaDato(sexo, WSX, fill, true) +
+        celdaDato(p.causa, WCA, fill, false) +
+        celdaDato(p.juzgado, WJU, fill, false) +
+        celdaDato(cond.d, WD, fill, true) +
+        celdaDato(cond.m, WM, fill, true) +
+        celdaDato(cond.a, WA, fill, true) +
+        celdaDato(asis.d, WD, fill, true) +
+        celdaDato(asis.m, WM, fill, true) +
+        celdaDato(asis.a, WA, fill, true) +
+        celdaDato(agot.d, WD, fill, true) +
+        celdaDato(agot.m, WM, fill, true) +
+        celdaDato(agot.a, WA, fill, true) +
+        celdaDato(p.salida, WSA, fill, true) +
       '</w:tr>';
     }).join("");
 
@@ -655,6 +716,7 @@ async function exportarWord() {
       '<w:tblPr>' +
         '<w:tblW w:w="' + TOTAL + '" w:type="dxa"/>' +
         '<w:tblLayout w:type="fixed"/>' +
+        '<w:tblBorders>' + borde() + '</w:tblBorders>' +
       '</w:tblPr>' +
       '<w:tblGrid>' + colDefs + '</w:tblGrid>' +
       fHead1 + fHead2 + filasDatos +
@@ -672,7 +734,7 @@ async function exportarWord() {
         parrafo("Total de internos condenados: " + internos.length, true, "left", 18) +
         '<w:sectPr>' +
           '<w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/>' +
-          '<w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720" w:header="0" w:footer="0" w:gutter="0"/>' +
+          '<w:pgMar w:top="720" w:right="360" w:bottom="720" w:left="360" w:header="0" w:footer="0" w:gutter="0"/>' +
         '</w:sectPr>' +
       '</w:body>' +
     '</w:document>';
@@ -682,14 +744,11 @@ async function exportarWord() {
       '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
         '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>' +
       '</Relationships>');
-
     zip.folder("word/_rels").file("document.xml.rels",
       '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
       '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
       '</Relationships>');
-
     zip.file("word/document.xml", docXml);
-
     zip.file("[Content_Types].xml",
       '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
       '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
