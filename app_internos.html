@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Internos Condenados – CP N°1</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --azul: #1F4E79;
+  --azul-med: #2E75B6;
+  --azul-light: #D6E4F0;
+  --azul-hover: #BDD7EE;
+  --gris: #F4F6F8;
+  --gris-borde: #CDD6E0;
+  --texto: #1A2533;
+  --texto-suave: #5A6E82;
+  --blanco: #FFFFFF;
+  --verde: #1E6B3C;
+  --rojo: #C0392B;
+  --amarillo: #D4A017;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'IBM Plex Sans', sans-serif;
+  background: var(--gris);
+  color: var(--texto);
+  min-height: 100vh;
+}
+
+/* HEADER */
+header {
+  background: var(--azul);
+  color: white;
+  padding: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.header-top {
+  padding: 16px 28px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+.header-top h1 {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.header-top p {
+  font-size: 11px;
+  opacity: 0.7;
+  margin-top: 2px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 28px;
+  flex-wrap: wrap;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 4px;
+  border: none;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-decoration: none;
+}
+.btn-primary { background: var(--azul-med); color: white; }
+.btn-primary:hover { background: #3A8AD4; }
+.btn-success { background: var(--verde); color: white; }
+.btn-success:hover { background: #258A4E; }
+.btn-danger { background: var(--rojo); color: white; }
+.btn-danger:hover { background: #E04535; }
+.btn-outline { background: transparent; color: white; border: 1px solid rgba(255,255,255,0.4); }
+.btn-outline:hover { background: rgba(255,255,255,0.1); }
+
+.search-box {
+  flex: 1;
+  min-width: 200px;
+  max-width: 340px;
+}
+.search-box input {
+  width: 100%;
+  padding: 7px 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.12);
+  color: white;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13px;
+  outline: none;
+}
+.search-box input::placeholder { color: rgba(255,255,255,0.5); }
+.search-box input:focus { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.6); }
+
+.estado-bar {
+  margin-left: auto;
+  font-size: 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  opacity: 0.75;
+  white-space: nowrap;
+}
+
+/* MAIN */
+main { padding: 20px 28px; }
+
+/* TABLA */
+.tabla-wrap {
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  overflow: auto;
+  max-height: calc(100vh - 180px);
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+thead { position: sticky; top: 0; z-index: 10; }
+thead tr:first-child th {
+  background: var(--azul);
+  color: white;
+  padding: 8px 10px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid rgba(255,255,255,0.2);
+  white-space: nowrap;
+}
+thead tr:last-child th {
+  background: #2E75B6;
+  color: rgba(255,255,255,0.85);
+  padding: 5px 8px;
+  text-align: center;
+  font-size: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+tbody tr { border-bottom: 1px solid var(--gris-borde); transition: background 0.1s; }
+tbody tr:nth-child(even) { background: var(--azul-light); }
+tbody tr:hover { background: var(--azul-hover) !important; }
+tbody td {
+  padding: 7px 9px;
+  border: 1px solid var(--gris-borde);
+  vertical-align: middle;
+  line-height: 1.3;
+}
+.td-num { text-align: center; font-family: 'IBM Plex Mono', monospace; color: var(--texto-suave); width: 36px; }
+.td-leg { text-align: center; font-family: 'IBM Plex Mono', monospace; font-weight: 600; width: 60px; }
+.td-nom { font-weight: 600; min-width: 180px; max-width: 220px; }
+.td-causa { min-width: 200px; max-width: 280px; font-size: 11px; color: var(--texto-suave); }
+.td-juz { min-width: 140px; font-size: 11px; }
+.td-fecha { text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; width: 38px; }
+.td-sal { text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; min-width: 80px; }
+.td-acc { text-align: center; width: 70px; white-space: nowrap; }
+
+.btn-edit { background: var(--azul-med); color: white; border: none; padding: 3px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; font-family: 'IBM Plex Sans', sans-serif; }
+.btn-del { background: var(--rojo); color: white; border: none; padding: 3px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; font-family: 'IBM Plex Sans', sans-serif; margin-left: 3px; }
+
+/* MODAL */
+.overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+}
+.overlay.active { display: flex; }
+.modal {
+  background: white;
+  border-radius: 8px;
+  padding: 28px;
+  width: 620px;
+  max-width: 95vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+.modal h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--azul);
+  margin-bottom: 20px;
+  border-bottom: 2px solid var(--azul-light);
+  padding-bottom: 10px;
+}
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group.full { grid-column: 1 / -1; }
+.form-group label { font-size: 11px; font-weight: 600; color: var(--texto-suave); text-transform: uppercase; letter-spacing: 0.05em; }
+.form-group input, .form-group textarea {
+  padding: 8px 10px;
+  border: 1px solid var(--gris-borde);
+  border-radius: 4px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.form-group input:focus, .form-group textarea:focus { border-color: var(--azul-med); }
+.form-group textarea { resize: vertical; min-height: 70px; }
+.form-note { font-size: 11px; color: var(--texto-suave); margin-top: 2px; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+.btn-sec { background: var(--gris); color: var(--texto); border: 1px solid var(--gris-borde); padding: 8px 18px; border-radius: 4px; cursor: pointer; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; font-weight: 600; }
+.btn-prim { background: var(--azul); color: white; border: none; padding: 8px 18px; border-radius: 4px; cursor: pointer; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; font-weight: 600; }
+
+/* TOAST */
+.toast {
+  position: fixed;
+  bottom: 24px; right: 24px;
+  background: var(--azul);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  z-index: 999;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.3s;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.ok { background: var(--verde); }
+.toast.err { background: var(--rojo); }
+
+.loading { text-align: center; padding: 40px; color: var(--texto-suave); font-size: 14px; }
+.badge { display: inline-block; background: var(--azul-light); color: var(--azul); font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 10px; font-family: 'IBM Plex Mono', monospace; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <h1>Complejo Penitenciario N° 1 — Gabinete Técnico Criminológico</h1>
+    <p>PLANILLA DE INTERNOS CONDENADOS · Gestión y exportación mensual</p>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-outline" onclick="cargarDesdeSheets()">⟳ Actualizar desde Sheets</button>
+    <button class="btn btn-primary" onclick="abrirModal()">+ Agregar interno</button>
+    <button class="btn btn-success" onclick="exportarWord()">↓ Exportar Word</button>
+    <div class="search-box">
+      <input type="text" id="buscador" placeholder="Buscar por nombre, legajo..." oninput="filtrar()">
+    </div>
+    <span class="estado-bar" id="estadoBar">Cargando...</span>
+  </div>
+</header>
+
+<main>
+  <div class="tabla-wrap">
+    <table id="tabla">
+      <thead>
+        <tr>
+          <th rowspan="2">N°</th>
+          <th rowspan="2">Legajo</th>
+          <th rowspan="2">Apellido y Nombre</th>
+          <th rowspan="2">Causa / Condena</th>
+          <th rowspan="2">Juzgado Interviniente</th>
+          <th colspan="3">Libertad Condicional</th>
+          <th colspan="3">Libertad Asistida</th>
+          <th colspan="3">Agotamiento de Pena</th>
+          <th rowspan="2">Salida Transitoria</th>
+          <th rowspan="2">Acciones</th>
+        </tr>
+        <tr>
+          <th>D</th><th>M</th><th>A</th>
+          <th>D</th><th>M</th><th>A</th>
+          <th>D</th><th>M</th><th>A</th>
+        </tr>
+      </thead>
+      <tbody id="cuerpo">
+        <tr><td colspan="17" class="loading">Cargando datos desde Google Sheets...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2 id="modalTitulo">Agregar interno</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Legajo N°</label>
+        <input type="text" id="f_legajo" placeholder="Ej: 1234">
+      </div>
+      <div class="form-group full">
+        <label>Apellido y Nombre</label>
+        <input type="text" id="f_nombre" placeholder="Ej: GARCIA, Juan Carlos">
+      </div>
+      <div class="form-group full">
+        <label>Causa / Condena</label>
+        <textarea id="f_causa" placeholder="Descripción del delito..."></textarea>
+      </div>
+      <div class="form-group full">
+        <label>Juzgado Interviniente</label>
+        <input type="text" id="f_juzgado" placeholder="Ej: Juzgado de Ejecución Penal Nº 1">
+      </div>
+      <div class="form-group">
+        <label>Libertad Condicional</label>
+        <input type="text" id="f_condicional" placeholder="DD/MM/AAAA">
+        <span class="form-note">Dejar vacío si no corresponde</span>
+      </div>
+      <div class="form-group">
+        <label>Libertad Asistida</label>
+        <input type="text" id="f_asistida" placeholder="DD/MM/AAAA">
+      </div>
+      <div class="form-group">
+        <label>Agotamiento de Pena</label>
+        <input type="text" id="f_agotamiento" placeholder="DD/MM/AAAA o texto">
+      </div>
+      <div class="form-group">
+        <label>Salida Transitoria</label>
+        <input type="text" id="f_salida" placeholder="DD/MM/AAAA">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-sec" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-prim" onclick="guardarInterno()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRQBwSJsHcgjudymi5hpR4AtYKs3KBmTbD1Fyxg0_ADTwBsnzyBFmIAmVUApR7mifdPsbiu5bk73h7Y/pub?gid=0&single=true&output=csv";
+const LS_KEY = "cp1_internos";
+
+let internos = [];
+let editIdx = null;
+let filtrados = [];
+
+// ---- UTILIDADES ----
+function parseFecha(str) {
+  if (!str || str.trim() === "") return { d: "", m: "", a: "" };
+  const s = str.trim();
+  if (s.startsWith("=")) return { d: "", m: "", a: "" };
+  const match = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (match) return { d: match[1].padStart(2,"0"), m: match[2].padStart(2,"0"), a: match[3] };
+  return { d: s, m: "", a: "" };
+}
+
+function toast(msg, tipo="ok") {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "toast show " + tipo;
+  setTimeout(() => t.className = "toast", 3000);
+}
+
+function guardarLocal() {
+  localStorage.setItem(LS_KEY, JSON.stringify(internos));
+}
+
+// ---- CARGAR DESDE SHEETS ----
+async function cargarDesdeSheets() {
+  document.getElementById("estadoBar").textContent = "Sincronizando...";
+  try {
+    const resp = await fetch(CSV_URL + "&t=" + Date.now());
+    const text = await resp.text();
+    const filas = text.trim().split("\n").slice(1); // saltar encabezado
+    const nuevos = [];
+    for (const fila of filas) {
+      const cols = parsearCSV(fila);
+      if (!cols[2] || cols[2].trim() === "") continue;
+      nuevos.push({
+        legajo: (cols[1] || "").trim(),
+        nombre: (cols[2] || "").trim(),
+        causa:  (cols[3] || "").trim(),
+        juzgado:(cols[4] || "").trim(),
+        condicional: (cols[5] || "").trim(),
+        asistida:    (cols[6] || "").trim(),
+        agotamiento: (cols[7] || "").trim(),
+        salida:      (cols[8] || "").trim(),
+      });
+    }
+    if (nuevos.length > 0) {
+      internos = nuevos;
+      guardarLocal();
+      renderTabla();
+      toast(`✓ ${internos.length} internos cargados desde Sheets`);
+    } else {
+      toast("Sheets vacío — usando datos locales", "err");
+      cargarLocal();
+    }
+  } catch(e) {
+    toast("Error al conectar con Sheets — usando datos locales", "err");
+    cargarLocal();
+  }
+}
+
+function parsearCSV(fila) {
+  const resultado = [];
+  let campo = "", dentro = false;
+  for (let i = 0; i < fila.length; i++) {
+    const c = fila[i];
+    if (c === '"') { dentro = !dentro; }
+    else if (c === ',' && !dentro) { resultado.push(campo); campo = ""; }
+    else { campo += c; }
+  }
+  resultado.push(campo);
+  return resultado;
+}
+
+function cargarLocal() {
+  const raw = localStorage.getItem(LS_KEY);
+  if (raw) { internos = JSON.parse(raw); renderTabla(); }
+  else { internos = []; renderTabla(); }
+}
+
+// ---- RENDERIZAR TABLA ----
+function renderTabla(lista) {
+  if (!lista) lista = internos;
+  filtrados = lista;
+  const tbody = document.getElementById("cuerpo");
+  document.getElementById("estadoBar").textContent = `${lista.length} internos`;
+
+  if (lista.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="17" class="loading">Sin datos. Agregá internos o sincronizá con Sheets.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = lista.map((p, i) => {
+    const idxReal = internos.indexOf(p);
+    const cond = parseFecha(p.condicional);
+    const asis = parseFecha(p.asistida);
+    const agot = parseFecha(p.agotamiento);
+    const sal  = parseFecha(p.salida);
+    return `<tr>
+      <td class="td-num">${i+1}</td>
+      <td class="td-leg">${p.legajo || ""}</td>
+      <td class="td-nom">${p.nombre || ""}</td>
+      <td class="td-causa">${p.causa || ""}</td>
+      <td class="td-juz">${p.juzgado || ""}</td>
+      <td class="td-fecha">${cond.d}</td><td class="td-fecha">${cond.m}</td><td class="td-fecha">${cond.a}</td>
+      <td class="td-fecha">${asis.d}</td><td class="td-fecha">${asis.m}</td><td class="td-fecha">${asis.a}</td>
+      <td class="td-fecha">${agot.d}</td><td class="td-fecha">${agot.m}</td><td class="td-fecha">${agot.a}</td>
+      <td class="td-sal">${p.salida || ""}</td>
+      <td class="td-acc">
+        <button class="btn-edit" onclick="editarInterno(${idxReal})">✏</button>
+        <button class="btn-del" onclick="eliminarInterno(${idxReal})">✕</button>
+      </td>
+    </tr>`;
+  }).join("");
+}
+
+function filtrar() {
+  const q = document.getElementById("buscador").value.toLowerCase();
+  if (!q) { renderTabla(); return; }
+  renderTabla(internos.filter(p =>
+    (p.nombre || "").toLowerCase().includes(q) ||
+    (p.legajo || "").toLowerCase().includes(q) ||
+    (p.causa || "").toLowerCase().includes(q)
+  ));
+}
+
+// ---- MODAL ----
+function abrirModal(idx) {
+  editIdx = idx !== undefined ? idx : null;
+  document.getElementById("modalTitulo").textContent = editIdx !== null ? "Editar interno" : "Agregar interno";
+  const p = editIdx !== null ? internos[editIdx] : {};
+  document.getElementById("f_legajo").value = p.legajo || "";
+  document.getElementById("f_nombre").value = p.nombre || "";
+  document.getElementById("f_causa").value = p.causa || "";
+  document.getElementById("f_juzgado").value = p.juzgado || "";
+  document.getElementById("f_condicional").value = p.condicional || "";
+  document.getElementById("f_asistida").value = p.asistida || "";
+  document.getElementById("f_agotamiento").value = p.agotamiento || "";
+  document.getElementById("f_salida").value = p.salida || "";
+  document.getElementById("overlay").classList.add("active");
+}
+function cerrarModal() { document.getElementById("overlay").classList.remove("active"); }
+function editarInterno(idx) { abrirModal(idx); }
+
+function guardarInterno() {
+  const nombre = document.getElementById("f_nombre").value.trim();
+  if (!nombre) { toast("El nombre es obligatorio", "err"); return; }
+  const nuevo = {
+    legajo: document.getElementById("f_legajo").value.trim(),
+    nombre,
+    causa: document.getElementById("f_causa").value.trim(),
+    juzgado: document.getElementById("f_juzgado").value.trim(),
+    condicional: document.getElementById("f_condicional").value.trim(),
+    asistida: document.getElementById("f_asistida").value.trim(),
+    agotamiento: document.getElementById("f_agotamiento").value.trim(),
+    salida: document.getElementById("f_salida").value.trim(),
+  };
+  if (editIdx !== null) { internos[editIdx] = nuevo; }
+  else { internos.push(nuevo); }
+  internos.sort((a,b) => a.nombre.localeCompare(b.nombre, 'es'));
+  guardarLocal();
+  renderTabla();
+  cerrarModal();
+  toast(editIdx !== null ? "✓ Interno actualizado" : "✓ Interno agregado");
+}
+
+function eliminarInterno(idx) {
+  if (!confirm(`¿Eliminar a ${internos[idx].nombre}?`)) return;
+  internos.splice(idx, 1);
+  guardarLocal();
+  renderTabla();
+  toast("Interno eliminado");
+}
+
+// ---- EXPORTAR WORD ----
+async function exportarWord() {
+  toast("Generando Word...");
+  const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+          AlignmentType, PageOrientation, BorderStyle, WidthType, ShadingType, VerticalAlign } = docx;
+
+  const AZ = "#1F4E79", AZ2 = "#2E75B6", ALT = "D6E4F0", BLANCO = "FFFFFF", GRIS = "CCCCCC";
+  const b = { style: BorderStyle.SINGLE, size: 1, color: GRIS };
+  const bords = { top: b, bottom: b, left: b, right: b };
+
+  function hCell(txt, w, span) {
+    const o = {
+      borders: bords, width: { size: w, type: WidthType.DXA },
+      shading: { fill: AZ, type: ShadingType.CLEAR },
+      verticalAlign: VerticalAlign.CENTER,
+      margins: { top: 60, bottom: 60, left: 80, right: 80 },
+      children: [new Paragraph({ alignment: AlignmentType.CENTER,
+        children: [new TextRun({ text: txt, bold: true, color: "FFFFFF", size: 14, font: "Arial" })] })]
+    };
+    if (span) o.columnSpan = span;
+    return new TableCell(o);
+  }
+  function hCell2(txt, w) {
+    return new TableCell({
+      borders: bords, width: { size: w, type: WidthType.DXA },
+      shading: { fill: AZ2, type: ShadingType.CLEAR },
+      verticalAlign: VerticalAlign.CENTER,
+      margins: { top: 50, bottom: 50, left: 60, right: 60 },
+      children: [new Paragraph({ alignment: AlignmentType.CENTER,
+        children: [new TextRun({ text: txt, bold: true, color: "FFFFFF", size: 12, font: "Arial" })] })]
+    });
+  }
+  function dCell(txt, w, isAlt, center) {
+    return new TableCell({
+      borders: bords, width: { size: w, type: WidthType.DXA },
+      shading: { fill: isAlt ? ALT : BLANCO, type: ShadingType.CLEAR },
+      verticalAlign: VerticalAlign.CENTER,
+      margins: { top: 40, bottom: 40, left: 80, right: 80 },
+      children: [new Paragraph({
+        alignment: center ? AlignmentType.CENTER : AlignmentType.LEFT,
+        children: [new TextRun({ text: txt || "", size: 14, font: "Arial" })]
+      })]
+    });
+  }
+
+  const WN=380, WL=520, WNM=2100, WCA=3200, WJU=1600, WD=380, WM=380, WA=560, WSA=900;
+  const TOTAL = WN+WL+WNM+WCA+WJU+(WD+WM+WA)*3+WSA;
+
+  // Obtener mes y año actual
+  const ahora = new Date();
+  const meses = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  const mesAnio = `${meses[ahora.getMonth()]} ${ahora.getFullYear()}`;
+  const fechaHoy = `${String(ahora.getDate()).padStart(2,"0")} de ${meses[ahora.getMonth()]} de ${ahora.getFullYear()}`;
+
+  const filaHead1 = new TableRow({ tableHeader: true, children: [
+    hCell("N°", WN), hCell("Legajo", WL), hCell("Apellido y Nombre", WNM),
+    hCell("Causa / Condena", WCA), hCell("Juzgado Interviniente", WJU),
+    hCell("Libertad Condicional", (WD+WM+WA), 3),
+    hCell("Libertad Asistida", (WD+WM+WA), 3),
+    hCell("Agotamiento de Pena", (WD+WM+WA), 3),
+    hCell("Salida Transitoria / Modalidades", WSA),
+  ]});
+  const filaHead2 = new TableRow({ tableHeader: true, children: [
+    hCell2("", WN), hCell2("", WL), hCell2("", WNM), hCell2("", WCA), hCell2("", WJU),
+    hCell2("D",WD), hCell2("M",WM), hCell2("A",WA),
+    hCell2("D",WD), hCell2("M",WM), hCell2("A",WA),
+    hCell2("D",WD), hCell2("M",WM), hCell2("A",WA),
+    hCell2("", WSA),
+  ]});
+
+  const filasDatos = internos.map((p, i) => {
+    const isAlt = i % 2 === 1;
+    const cond = parseFecha(p.condicional);
+    const asis = parseFecha(p.asistida);
+    const agot = parseFecha(p.agotamiento);
+    return new TableRow({ children: [
+      dCell(String(i+1), WN, isAlt, true),
+      dCell(p.legajo, WL, isAlt, true),
+      dCell(p.nombre, WNM, isAlt, false),
+      dCell(p.causa, WCA, isAlt, false),
+      dCell(p.juzgado, WJU, isAlt, false),
+      dCell(cond.d, WD, isAlt, true), dCell(cond.m, WM, isAlt, true), dCell(cond.a, WA, isAlt, true),
+      dCell(asis.d, WD, isAlt, true), dCell(asis.m, WM, isAlt, true), dCell(asis.a, WA, isAlt, true),
+      dCell(agot.d, WD, isAlt, true), dCell(agot.m, WM, isAlt, true), dCell(agot.a, WA, isAlt, true),
+      dCell(p.salida, WSA, isAlt, true),
+    ]});
+  });
+
+  const tabla = new Table({
+    width: { size: TOTAL, type: WidthType.DXA },
+    columnWidths: [WN,WL,WNM,WCA,WJU,WD,WM,WA,WD,WM,WA,WD,WM,WA,WSA],
+    rows: [filaHead1, filaHead2, ...filasDatos]
+  });
+
+  const doc = new Document({ sections: [{
+    properties: { page: {
+      size: { width: 12240, height: 15840, orientation: PageOrientation.LANDSCAPE },
+      margin: { top: 720, right: 720, bottom: 720, left: 720 }
+    }},
+    children: [
+      new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 40 },
+        children: [new TextRun({ text: "PROVINCIA DEL CHACO", bold: true, size: 22, font: "Arial" })] }),
+      new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 40 },
+        children: [new TextRun({ text: "SERVICIO PENITENCIARIO PROVINCIAL", bold: true, size: 20, font: "Arial" })] }),
+      new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 40 },
+        children: [new TextRun({ text: "COMPLEJO PENITENCIARIO N° 1 – GABINETE TÉCNICO CRIMINOLÓGICO", bold: true, size: 20, font: "Arial" })] }),
+      new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 160 },
+        children: [new TextRun({ text: `PLANILLA DE INTERNOS CONDENADOS – ${mesAnio.toUpperCase()}`, bold: true, size: 22, font: "Arial", underline: {} })] }),
+      new Paragraph({ alignment: AlignmentType.RIGHT, spacing: { after: 100 },
+        children: [new TextRun({ text: `Resistencia, ${fechaHoy}`, size: 18, font: "Arial", italics: true })] }),
+      tabla,
+      new Paragraph({ spacing: { before: 240 },
+        children: [new TextRun({ text: `Total de internos condenados: ${internos.length}`, bold: true, size: 18, font: "Arial" })] }),
+    ]
+  }]});
+
+  const buf = await Packer.toBuffer(doc);
+  const blob = new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  const mes = meses[ahora.getMonth()];
+  a.download = `Planilla_Condenados_CP1_${mes}_${ahora.getFullYear()}.docx`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast("✓ Word exportado correctamente");
+}
+
+// ---- INIT ----
+window.addEventListener("load", () => {
+  cargarLocal();
+  cargarDesdeSheets();
+});
+document.getElementById("overlay").addEventListener("click", function(e) {
+  if (e.target === this) cerrarModal();
+});
+</script>
+</body>
+</html>
