@@ -517,128 +517,237 @@ function eliminarInterno(idx) {
 // ---- EXPORTAR WORD ----
 async function exportarWord() {
   toast("Generando Word...");
-  const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
-          AlignmentType, PageOrientation, BorderStyle, WidthType, ShadingType, VerticalAlign } = docx;
+  try {
+    const zip = new JSZip();
+    const ahora = new Date();
+    const meses = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+    const mesAnio = meses[ahora.getMonth()].toUpperCase() + " " + ahora.getFullYear();
+    const fechaHoy = String(ahora.getDate()).padStart(2,"0") + " de " + meses[ahora.getMonth()] + " de " + ahora.getFullYear();
 
-  const AZ = "#1F4E79", AZ2 = "#2E75B6", ALT = "D6E4F0", BLANCO = "FFFFFF", GRIS = "CCCCCC";
-  const b = { style: BorderStyle.SINGLE, size: 1, color: GRIS };
-  const bords = { top: b, bottom: b, left: b, right: b };
+    // ---- Helpers XML ----
+    function esc(s) {
+      if (!s) return "";
+      return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    }
 
-  function hCell(txt, w, span) {
-    const o = {
-      borders: bords, width: { size: w, type: WidthType.DXA },
-      shading: { fill: AZ, type: ShadingType.CLEAR },
-      verticalAlign: VerticalAlign.CENTER,
-      margins: { top: 60, bottom: 60, left: 80, right: 80 },
-      children: [new Paragraph({ alignment: AlignmentType.CENTER,
-        children: [new TextRun({ text: txt, bold: true, color: "FFFFFF", size: 14, font: "Arial" })] })]
-    };
-    if (span) o.columnSpan = span;
-    return new TableCell(o);
+    function pt(val) { return Math.round(val * 20); } // puntos a twips
+
+    // Colores
+    const AZ = "1F4E79", AZ2 = "2E75B6", ALT = "D6E4F0";
+
+    // Anchos columnas en twips (DXA)
+    const WN=380, WL=520, WNM=2100, WCA=3200, WJU=1600, WD=380, WM=380, WA=560, WSA=900;
+    const COLS = [WN,WL,WNM,WCA,WJU,WD,WM,WA,WD,WM,WA,WD,WM,WA,WSA];
+    const TOTAL = COLS.reduce((a,b)=>a+b,0);
+
+    function borde() {
+      return '<w:top w:val="single" w:sz="4" w:space="0" w:color="999999"/>' +
+             '<w:left w:val="single" w:sz="4" w:space="0" w:color="999999"/>' +
+             '<w:bottom w:val="single" w:sz="4" w:space="0" w:color="999999"/>' +
+             '<w:right w:val="single" w:sz="4" w:space="0" w:color="999999"/>';
+    }
+
+    function celda(txt, w, fill, bold, center, span, color) {
+      const al = center ? "center" : "left";
+      const fc = fill || "FFFFFF";
+      const tc = color || "000000";
+      const spanAttr = span ? \`<w:gridSpan w:val="\${span}"/>\` : "";
+      return \`<w:tc>
+        <w:tcPr>
+          \${spanAttr}
+          <w:tcW w:w="\${w}" w:type="dxa"/>
+          <w:shd w:val="clear" w:color="auto" w:fill="\${fc}"/>
+          <w:tcBorders>\${borde()}</w:tcBorders>
+          <w:vAlign w:val="center"/>
+          <w:tcMar>
+            <w:top w:w="40" w:type="dxa"/>
+            <w:bottom w:w="40" w:type="dxa"/>
+            <w:left w:w="80" w:type="dxa"/>
+            <w:right w:w="80" w:type="dxa"/>
+          </w:tcMar>
+        </w:tcPr>
+        <w:p>
+          <w:pPr><w:jc w:val="\${al}"/><w:spacing w:before="0" w:after="0"/></w:pPr>
+          <w:r>
+            <w:rPr>
+              \${bold ? "<w:b/>" : ""}
+              <w:color w:val="\${tc}"/>
+              <w:sz w:val="14"/>
+              <w:szCs w:val="14"/>
+              <w:rFonts w:ascii="Arial" w:hAnsi="Arial"/>
+            </w:rPr>
+            <w:t xml:space="preserve">\${esc(txt)}</w:t>
+          </w:r>
+        </w:p>
+      </w:tc>\`;
+    }
+
+    function parrafo(txt, bold, center, size, underline, italic) {
+      const al = center ? "center" : (bold ? "left" : "left");
+      const sz = size || 20;
+      return \`<w:p>
+        <w:pPr>
+          <w:jc w:val="\${al}"/>
+          <w:spacing w:before="0" w:after="80"/>
+        </w:pPr>
+        <w:r>
+          <w:rPr>
+            \${bold ? "<w:b/>" : ""}
+            \${italic ? "<w:i/>" : ""}
+            \${underline ? '<w:u w:val="single"/>' : ""}
+            <w:sz w:val="\${sz}"/>
+            <w:szCs w:val="\${sz}"/>
+            <w:rFonts w:ascii="Arial" w:hAnsi="Arial"/>
+          </w:rPr>
+          <w:t xml:space="preserve">\${esc(txt)}</w:t>
+        </w:r>
+      </w:p>\`;
+    }
+
+    // Fila encabezado 1
+    const fHead1 = \`<w:tr>
+      <w:trPr><w:tblHeader/></w:trPr>
+      \${celda("N°", WN, AZ, true, true, null, "FFFFFF")}
+      \${celda("Legajo", WL, AZ, true, true, null, "FFFFFF")}
+      \${celda("Apellido y Nombre", WNM, AZ, true, true, null, "FFFFFF")}
+      \${celda("Causa / Condena", WCA, AZ, true, true, null, "FFFFFF")}
+      \${celda("Juzgado Interviniente", WJU, AZ, true, true, null, "FFFFFF")}
+      \${celda("Libertad Condicional", WD+WM+WA, AZ, true, true, 3, "FFFFFF")}
+      \${celda("Libertad Asistida", WD+WM+WA, AZ, true, true, 3, "FFFFFF")}
+      \${celda("Agotamiento de Pena", WD+WM+WA, AZ, true, true, 3, "FFFFFF")}
+      \${celda("Salida Transitoria / Modalidades", WSA, AZ, true, true, null, "FFFFFF")}
+    </w:tr>\`;
+
+    // Fila encabezado 2
+    const fHead2 = \`<w:tr>
+      <w:trPr><w:tblHeader/></w:trPr>
+      \${celda("", WN, AZ2, true, true, null, "FFFFFF")}
+      \${celda("", WL, AZ2, true, true, null, "FFFFFF")}
+      \${celda("", WNM, AZ2, true, true, null, "FFFFFF")}
+      \${celda("", WCA, AZ2, true, true, null, "FFFFFF")}
+      \${celda("", WJU, AZ2, true, true, null, "FFFFFF")}
+      \${celda("D", WD, AZ2, true, true, null, "FFFFFF")}
+      \${celda("M", WM, AZ2, true, true, null, "FFFFFF")}
+      \${celda("A", WA, AZ2, true, true, null, "FFFFFF")}
+      \${celda("D", WD, AZ2, true, true, null, "FFFFFF")}
+      \${celda("M", WM, AZ2, true, true, null, "FFFFFF")}
+      \${celda("A", WA, AZ2, true, true, null, "FFFFFF")}
+      \${celda("D", WD, AZ2, true, true, null, "FFFFFF")}
+      \${celda("M", WM, AZ2, true, true, null, "FFFFFF")}
+      \${celda("A", WA, AZ2, true, true, null, "FFFFFF")}
+      \${celda("", WSA, AZ2, true, true, null, "FFFFFF")}
+    </w:tr>\`;
+
+    // Filas de datos
+    const filasDatos = internos.map((p, i) => {
+      const isAlt = i % 2 === 1;
+      const fill = isAlt ? ALT : "FFFFFF";
+      const cond = parseFecha(p.condicional);
+      const asis = parseFecha(p.asistida);
+      const agot = parseFecha(p.agotamiento);
+      return \`<w:tr>
+        \${celda(String(i+1), WN, fill, false, true)}
+        \${celda(p.legajo, WL, fill, false, true)}
+        \${celda(p.nombre, WNM, fill, false, false)}
+        \${celda(p.causa, WCA, fill, false, false)}
+        \${celda(p.juzgado, WJU, fill, false, false)}
+        \${celda(cond.d, WD, fill, false, true)}
+        \${celda(cond.m, WM, fill, false, true)}
+        \${celda(cond.a, WA, fill, false, true)}
+        \${celda(asis.d, WD, fill, false, true)}
+        \${celda(asis.m, WM, fill, false, true)}
+        \${celda(asis.a, WA, fill, false, true)}
+        \${celda(agot.d, WD, fill, false, true)}
+        \${celda(agot.m, WM, fill, false, true)}
+        \${celda(agot.a, WA, fill, false, true)}
+        \${celda(p.salida, WSA, fill, false, true)}
+      </w:tr>\`;
+    }).join("\\n");
+
+    // Definición de columnas para la tabla
+    const colDefs = COLS.map(w => \`<w:gridCol w:w="\${w}"/>\`).join("");
+
+    const tabla = \`<w:tbl>
+      <w:tblPr>
+        <w:tblW w:w="\${TOTAL}" w:type="dxa"/>
+        <w:tblLayout w:type="fixed"/>
+        <w:tblLook w:val="0000"/>
+      </w:tblPr>
+      <w:tblGrid>\${colDefs}</w:tblGrid>
+      \${fHead1}
+      \${fHead2}
+      \${filasDatos}
+    </w:tbl>\`;
+
+    const document_xml = \`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:o="urn:schemas-microsoft-com:office:office"
+  xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+  xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math"
+  xmlns:v="urn:schemas-microsoft-com:vml"
+  xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing"
+  xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+  xmlns:w10="urn:schemas-microsoft-com:office:word"
+  xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+  xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml"
+  xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup"
+  xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk"
+  xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml"
+  xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
+  mc:Ignorable="w14 wp14">
+  <w:body>
+    \${parrafo("PROVINCIA DEL CHACO", true, true, 22)}
+    \${parrafo("SERVICIO PENITENCIARIO PROVINCIAL", true, true, 20)}
+    \${parrafo("COMPLEJO PENITENCIARIO N° 1 – GABINETE TÉCNICO CRIMINOLÓGICO", true, true, 20)}
+    \${parrafo("PLANILLA DE INTERNOS CONDENADOS – " + mesAnio, true, true, 22, true)}
+    \${parrafo("Resistencia, " + fechaHoy, false, false, 18, false, true).replace('<w:jc w:val="left"/>', '<w:jc w:val="right"/>')}
+    \${tabla}
+    \${parrafo("Total de internos condenados: " + internos.length, true, false, 18)}
+    <w:sectPr>
+      <w:pgSz w:w="15840" w:h="12240" w:orient="landscape"/>
+      <w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720" w:header="0" w:footer="0" w:gutter="0"/>
+    </w:sectPr>
+  </w:body>
+</w:document>\`;
+
+    // Archivos del ZIP
+    zip.folder("_rels").file(".rels", \`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>\`);
+
+    zip.folder("word/_rels").file("document.xml.rels", \`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+</Relationships>\`);
+
+    zip.file("word/document.xml", document_xml);
+
+    zip.file("word/settings.xml", \`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:settings xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:defaultTabStop w:val="720"/>
+</w:settings>\`);
+
+    zip.file("[Content_Types].xml", \`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+  <Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/>
+</Types>\`);
+
+    const blob = await zip.generateAsync({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = \`Planilla_Condenados_CP1_\${meses[ahora.getMonth()]}_\${ahora.getFullYear()}.docx\`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast("✓ Word exportado correctamente");
+  } catch(e) {
+    console.error(e);
+    toast("Error al generar Word: " + e.message, "err");
   }
-  function hCell2(txt, w) {
-    return new TableCell({
-      borders: bords, width: { size: w, type: WidthType.DXA },
-      shading: { fill: AZ2, type: ShadingType.CLEAR },
-      verticalAlign: VerticalAlign.CENTER,
-      margins: { top: 50, bottom: 50, left: 60, right: 60 },
-      children: [new Paragraph({ alignment: AlignmentType.CENTER,
-        children: [new TextRun({ text: txt, bold: true, color: "FFFFFF", size: 12, font: "Arial" })] })]
-    });
-  }
-  function dCell(txt, w, isAlt, center) {
-    return new TableCell({
-      borders: bords, width: { size: w, type: WidthType.DXA },
-      shading: { fill: isAlt ? ALT : BLANCO, type: ShadingType.CLEAR },
-      verticalAlign: VerticalAlign.CENTER,
-      margins: { top: 40, bottom: 40, left: 80, right: 80 },
-      children: [new Paragraph({
-        alignment: center ? AlignmentType.CENTER : AlignmentType.LEFT,
-        children: [new TextRun({ text: txt || "", size: 14, font: "Arial" })]
-      })]
-    });
-  }
-
-  const WN=380, WL=520, WNM=2100, WCA=3200, WJU=1600, WD=380, WM=380, WA=560, WSA=900;
-  const TOTAL = WN+WL+WNM+WCA+WJU+(WD+WM+WA)*3+WSA;
-
-  // Obtener mes y año actual
-  const ahora = new Date();
-  const meses = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
-  const mesAnio = `${meses[ahora.getMonth()]} ${ahora.getFullYear()}`;
-  const fechaHoy = `${String(ahora.getDate()).padStart(2,"0")} de ${meses[ahora.getMonth()]} de ${ahora.getFullYear()}`;
-
-  const filaHead1 = new TableRow({ tableHeader: true, children: [
-    hCell("N°", WN), hCell("Legajo", WL), hCell("Apellido y Nombre", WNM),
-    hCell("Causa / Condena", WCA), hCell("Juzgado Interviniente", WJU),
-    hCell("Libertad Condicional", (WD+WM+WA), 3),
-    hCell("Libertad Asistida", (WD+WM+WA), 3),
-    hCell("Agotamiento de Pena", (WD+WM+WA), 3),
-    hCell("Salida Transitoria / Modalidades", WSA),
-  ]});
-  const filaHead2 = new TableRow({ tableHeader: true, children: [
-    hCell2("", WN), hCell2("", WL), hCell2("", WNM), hCell2("", WCA), hCell2("", WJU),
-    hCell2("D",WD), hCell2("M",WM), hCell2("A",WA),
-    hCell2("D",WD), hCell2("M",WM), hCell2("A",WA),
-    hCell2("D",WD), hCell2("M",WM), hCell2("A",WA),
-    hCell2("", WSA),
-  ]});
-
-  const filasDatos = internos.map((p, i) => {
-    const isAlt = i % 2 === 1;
-    const cond = parseFecha(p.condicional);
-    const asis = parseFecha(p.asistida);
-    const agot = parseFecha(p.agotamiento);
-    return new TableRow({ children: [
-      dCell(String(i+1), WN, isAlt, true),
-      dCell(p.legajo, WL, isAlt, true),
-      dCell(p.nombre, WNM, isAlt, false),
-      dCell(p.causa, WCA, isAlt, false),
-      dCell(p.juzgado, WJU, isAlt, false),
-      dCell(cond.d, WD, isAlt, true), dCell(cond.m, WM, isAlt, true), dCell(cond.a, WA, isAlt, true),
-      dCell(asis.d, WD, isAlt, true), dCell(asis.m, WM, isAlt, true), dCell(asis.a, WA, isAlt, true),
-      dCell(agot.d, WD, isAlt, true), dCell(agot.m, WM, isAlt, true), dCell(agot.a, WA, isAlt, true),
-      dCell(p.salida, WSA, isAlt, true),
-    ]});
-  });
-
-  const tabla = new Table({
-    width: { size: TOTAL, type: WidthType.DXA },
-    columnWidths: [WN,WL,WNM,WCA,WJU,WD,WM,WA,WD,WM,WA,WD,WM,WA,WSA],
-    rows: [filaHead1, filaHead2, ...filasDatos]
-  });
-
-  const doc = new Document({ sections: [{
-    properties: { page: {
-      size: { width: 12240, height: 15840, orientation: PageOrientation.LANDSCAPE },
-      margin: { top: 720, right: 720, bottom: 720, left: 720 }
-    }},
-    children: [
-      new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 40 },
-        children: [new TextRun({ text: "PROVINCIA DEL CHACO", bold: true, size: 22, font: "Arial" })] }),
-      new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 40 },
-        children: [new TextRun({ text: "SERVICIO PENITENCIARIO PROVINCIAL", bold: true, size: 20, font: "Arial" })] }),
-      new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 40 },
-        children: [new TextRun({ text: "COMPLEJO PENITENCIARIO N° 1 – GABINETE TÉCNICO CRIMINOLÓGICO", bold: true, size: 20, font: "Arial" })] }),
-      new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 160 },
-        children: [new TextRun({ text: `PLANILLA DE INTERNOS CONDENADOS – ${mesAnio.toUpperCase()}`, bold: true, size: 22, font: "Arial", underline: {} })] }),
-      new Paragraph({ alignment: AlignmentType.RIGHT, spacing: { after: 100 },
-        children: [new TextRun({ text: `Resistencia, ${fechaHoy}`, size: 18, font: "Arial", italics: true })] }),
-      tabla,
-      new Paragraph({ spacing: { before: 240 },
-        children: [new TextRun({ text: `Total de internos condenados: ${internos.length}`, bold: true, size: 18, font: "Arial" })] }),
-    ]
-  }]});
-
-  const blob = await Packer.toBlob(doc);
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  const mes = meses[ahora.getMonth()];
-  a.download = `Planilla_Condenados_CP1_${mes}_${ahora.getFullYear()}.docx`;
-  a.click();
-  URL.revokeObjectURL(url);
-  toast("✓ Word exportado correctamente");
 }
 
 // ---- INIT ----
