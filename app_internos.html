@@ -350,7 +350,8 @@ function parseFecha(str) {
   if (s.startsWith("=")) return { d: "", m: "", a: "" };
   const match = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (match) return { d: match[1].padStart(2,"0"), m: match[2].padStart(2,"0"), a: match[3] };
-  return { d: s, m: "", a: "" };
+  // Textos descriptivos como "No x delito", "Sin Pena Temporal" → solo en columna D abreviado
+  return { d: "", m: "", a: "" };
 }
 
 function toast(msg, tipo="ok") {
@@ -530,7 +531,7 @@ async function exportarWord() {
     }
 
     const AZ="1F4E79", AZ2="2E75B6", ALT="D6E4F0";
-    const WN=380,WL=520,WNM=2100,WCA=3200,WJU=1600,WD=380,WM=380,WA=560,WSA=900;
+    const WN=300,WL=480,WNM=1900,WCA=2800,WJU=1500,WD=340,WM=340,WA=500,WSA=800;
     const COLS=[WN,WL,WNM,WCA,WJU,WD,WM,WA,WD,WM,WA,WD,WM,WA,WSA];
     const TOTAL=COLS.reduce(function(a,b){return a+b;},0);
 
@@ -566,7 +567,7 @@ async function exportarWord() {
             '<w:rPr>' +
               (bold ? '<w:b/>' : '') +
               '<w:color w:val="' + tc + '"/>' +
-              '<w:sz w:val="14"/><w:szCs w:val="14"/>' +
+              '<w:sz w:val="12"/><w:szCs w:val="12"/>' +
               '<w:rFonts w:ascii="Arial" w:hAnsi="Arial"/>' +
             '</w:rPr>' +
             '<w:t xml:space="preserve">' + esc(txt) + '</w:t>' +
@@ -670,7 +671,7 @@ async function exportarWord() {
         tabla +
         parrafo("Total de internos condenados: " + internos.length, true, "left", 18) +
         '<w:sectPr>' +
-          '<w:pgSz w:w="15840" w:h="12240" w:orient="landscape"/>' +
+          '<w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/>' +
           '<w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720" w:header="0" w:footer="0" w:gutter="0"/>' +
         '</w:sectPr>' +
       '</w:body>' +
