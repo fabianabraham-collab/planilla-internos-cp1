@@ -323,7 +323,7 @@ tbody td {
       </div>
       <div class="form-group">
         <label>Salida Transitoria</label>
-        <input type="text" id="f_salida" placeholder="DD/MM/AAAA">
+        <input type="text" id="f_salida" placeholder="Ej: 15/03/2025 o NO X DELITO">
       </div>
     </div>
     <div class="modal-actions">
@@ -706,7 +706,7 @@ async function exportarWord() {
         celdaDato(agot.d, WD, fill, true) +
         celdaDato(agot.m, WM, fill, true) +
         celdaDato(agot.a, WA, fill, true) +
-        celdaDato((function(){var f=soloFecha(p.salida);return f.a?f.d+'/'+f.m+'/'+f.a:'';})(), WSA, fill, true) +
+        celdaDato(p.salida || '', WSA, fill, true) +
       '</w:tr>';
     }).join("");
 
