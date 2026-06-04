@@ -323,7 +323,7 @@ tbody td {
       </div>
       <div class="form-group">
         <label>Salida Transitoria</label>
-        <input type="text" id="f_salida" placeholder="Ej: 15/03/2025 o NO X DELITO">
+        <input type="text" id="f_salida" placeholder="DD/MM/AAAA">
       </div>
     </div>
     <div class="modal-actions">
@@ -447,7 +447,7 @@ function renderTabla(lista) {
       <td class="td-juz">${p.juzgado || ""}</td>
       <td class="td-fecha">${cond.d}</td><td class="td-fecha">${cond.m}</td><td class="td-fecha">${cond.a}</td>
       <td class="td-fecha">${asis.d}</td><td class="td-fecha">${asis.m}</td><td class="td-fecha">${asis.a}</td>
-      <td class="td-fecha">${agot.d}</td><td class="td-fecha">${agot.m}</td><td class="td-fecha">${agot.a}</td>
+      ${agot.d===''&&agot.m===''&&agot.a===''&&p.agotamiento?'<td class="td-fecha" colspan="3" style="text-align:center;font-family:IBM Plex Sans,sans-serif;">'+p.agotamiento+'</td>':'<td class="td-fecha">'+agot.d+'</td><td class="td-fecha">'+agot.m+'</td><td class="td-fecha">'+agot.a+'</td>'}
       <td class="td-sal">${p.salida || ""}</td>
       <td class="td-acc">
         <button class="btn-edit" onclick="editarInterno(${idxReal})">✏</button>
@@ -688,7 +688,6 @@ async function exportarWord() {
       var fill = isAlt ? ALT : "FFFFFF";
       var cond = soloFecha(p.condicional);
       var asis = soloFecha(p.asistida);
-      var agot = soloFecha(p.agotamiento);
       var sexo = p.sexo || "M";
       return '<w:tr><w:trPr><w:trHeight w:val="280" w:hRule="atLeast"/></w:trPr>' +
         celdaDato(String(i+1), WN, fill, true) +
@@ -703,10 +702,14 @@ async function exportarWord() {
         celdaDato(asis.d, WD, fill, true) +
         celdaDato(asis.m, WM, fill, true) +
         celdaDato(asis.a, WA, fill, true) +
-        celdaDato(agot.d, WD, fill, true) +
-        celdaDato(agot.m, WM, fill, true) +
-        celdaDato(agot.a, WA, fill, true) +
-        celdaDato(p.salida || '', WSA, fill, true) +
+        (function(){
+              if (!agot.a && p.agotamiento) {
+            // Texto libre (Perpetua, etc.) — celda con span 3
+            return '<w:tc><w:tcPr><w:gridSpan w:val="3"/><w:tcW w:w="' + (WD+WM+WA) + '" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="' + fill + '"/><w:tcBorders>' + borde() + '</w:tcBorders><w:vAlign w:val="center"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="0" w:after="0"/></w:pPr><w:r><w:rPr><w:color w:val="000000"/><w:sz w:val="14"/><w:szCs w:val="14"/><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/></w:rPr><w:t xml:space="preserve">' + esc(p.agotamiento) + '</w:t></w:r></w:p></w:tc>';
+          }
+          return celdaDato(agot.d, WD, fill, true) + celdaDato(agot.m, WM, fill, true) + celdaDato(agot.a, WA, fill, true);
+        })() +
+        celdaDato((function(){var f=soloFecha(p.salida);return f.a?f.d+'/'+f.m+'/'+f.a:'';})(), WSA, fill, true) +
       '</w:tr>';
     }).join("");
 
