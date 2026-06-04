@@ -266,6 +266,7 @@ tbody td {
           <th rowspan="2">N°</th>
           <th rowspan="2">Legajo</th>
           <th rowspan="2">Apellido y Nombre</th>
+          <th rowspan="2">Sexo</th>
           <th rowspan="2">Causa / Condena</th>
           <th rowspan="2">Juzgado Interviniente</th>
           <th colspan="3">Libertad Condicional</th>
@@ -282,6 +283,7 @@ tbody td {
       </thead>
       <tbody id="cuerpo">
         <tr><td colspan="17" class="loading">Cargando datos desde Google Sheets...</td></tr>
+        <!-- colspan=17: N°, Legajo, Nombre, Sexo, Causa, Juzgado, LC(D/M/A), LA(D/M/A), AP(D/M/A), Salida, Acciones -->
       </tbody>
     </table>
   </div>
@@ -299,6 +301,13 @@ tbody td {
       <div class="form-group full">
         <label>Apellido y Nombre</label>
         <input type="text" id="f_nombre" placeholder="Ej: GARCIA, Juan Carlos">
+      </div>
+      <div class="form-group">
+        <label>Sexo</label>
+        <select id="f_sexo" style="padding:8px 10px;border:1px solid var(--gris-borde);border-radius:4px;font-family:'IBM Plex Sans',sans-serif;font-size:13px;outline:none;">
+          <option value="M">M — Masculino</option>
+          <option value="F">F — Femenino</option>
+        </select>
       </div>
       <div class="form-group full">
         <label>Causa / Condena</label>
@@ -379,12 +388,13 @@ async function cargarDesdeSheets() {
       nuevos.push({
         legajo: (cols[1] || "").trim(),
         nombre: (cols[2] || "").trim(),
-        causa:  (cols[3] || "").trim(),
-        juzgado:(cols[4] || "").trim(),
-        condicional: (cols[5] || "").trim(),
-        asistida:    (cols[6] || "").trim(),
-        agotamiento: (cols[7] || "").trim(),
-        salida:      (cols[8] || "").trim(),
+        sexo:   (cols[3] || "M").trim(),
+        causa:  (cols[4] || "").trim(),
+        juzgado:(cols[5] || "").trim(),
+        condicional: (cols[6] || "").trim(),
+        asistida:    (cols[7] || "").trim(),
+        agotamiento: (cols[8] || "").trim(),
+        salida:      (cols[9] || "").trim(),
       });
     }
     if (nuevos.length > 0) {
@@ -443,6 +453,7 @@ function renderTabla(lista) {
       <td class="td-num">${i+1}</td>
       <td class="td-leg">${p.legajo || ""}</td>
       <td class="td-nom">${p.nombre || ""}</td>
+      <td class="td-fecha" style="text-align:center">${p.sexo || "M"}</td>
       <td class="td-causa">${p.causa || ""}</td>
       <td class="td-juz">${p.juzgado || ""}</td>
       <td class="td-fecha">${cond.d}</td><td class="td-fecha">${cond.m}</td><td class="td-fecha">${cond.a}</td>
@@ -474,6 +485,7 @@ function abrirModal(idx) {
   const p = editIdx !== null ? internos[editIdx] : {};
   document.getElementById("f_legajo").value = p.legajo || "";
   document.getElementById("f_nombre").value = p.nombre || "";
+  document.getElementById("f_sexo").value = p.sexo || "M";
   document.getElementById("f_causa").value = p.causa || "";
   document.getElementById("f_juzgado").value = p.juzgado || "";
   document.getElementById("f_condicional").value = p.condicional || "";
@@ -491,6 +503,7 @@ function guardarInterno() {
   const nuevo = {
     legajo: document.getElementById("f_legajo").value.trim(),
     nombre,
+    sexo: document.getElementById("f_sexo").value,
     causa: document.getElementById("f_causa").value.trim(),
     juzgado: document.getElementById("f_juzgado").value.trim(),
     condicional: document.getElementById("f_condicional").value.trim(),
@@ -554,7 +567,7 @@ async function exportarWord() {
     // Redondeado: N=388, Leg=667, Nom=2668, Sex=461, Cau=4122, Juz=2304, D=412,M=412,A=606 x3=4290, Sal=1212
     // Total = 388+667+2668+461+4122+2304+4290+1212 = 16112 ≈ OK
 
-    const WN=388, WL=667, WNM=2668, WSX=340, WCA=4243, WJU=2304;
+    const WN=388, WL=667, WNM=2668, WSX=500, WCA=4083, WJU=2304;
     const WD=412, WM=412, WA=606, WSA=1212;
     const COLS=[WN,WL,WNM,WSX,WCA,WJU,WD,WM,WA,WD,WM,WA,WD,WM,WA,WSA];
     const TOTAL=COLS.reduce(function(a,b){return a+b;},0);
@@ -706,7 +719,7 @@ async function exportarWord() {
         celdaDato(agot.d, WD, fill, true) +
         celdaDato(agot.m, WM, fill, true) +
         celdaDato(agot.a, WA, fill, true) +
-        celdaDato(soloFecha(p.salida).d && soloFecha(p.salida).a ? soloFecha(p.salida).d+'/'+soloFecha(p.salida).m+'/'+soloFecha(p.salida).a : '', WSA, fill, true) +
+        celdaDato(p.salida || '', WSA, fill, true) +
       '</w:tr>';
     }).join("");
 
