@@ -367,7 +367,7 @@ function renderTabla(lista) {
       <td class="td-juz">${p.juzgado || ""}</td>
       ${!cond.a && p.condicional ? '<td class="td-fecha" colspan="3" style="text-align:center">' + p.condicional + '</td>' : '<td class="td-fecha">' + cond.d + '</td><td class="td-fecha">' + cond.m + '</td><td class="td-fecha">' + cond.a + '</td>'}
       ${!asis.a && p.asistida ? '<td class="td-fecha" colspan="3" style="text-align:center">' + p.asistida + '</td>' : '<td class="td-fecha">' + asis.d + '</td><td class="td-fecha">' + asis.m + '</td><td class="td-fecha">' + asis.a + '</td>'}
-      <td class="td-fecha">${agot.d}</td><td class="td-fecha">${agot.m}</td><td class="td-fecha">${agot.a}</td>
+      ${!agot.a && p.agotamiento ? '<td class="td-fecha" colspan="3" style="text-align:center">' + p.agotamiento + '</td>' : '<td class="td-fecha">' + agot.d + '</td><td class="td-fecha">' + agot.m + '</td><td class="td-fecha">' + agot.a + '</td>'}
       <td class="td-sal">${p.salida || ""}</td>
     </tr>`;
   }).join("");
