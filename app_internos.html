@@ -565,15 +565,52 @@ async function exportarWord() {
         celdaDato(sexo, WSX, fill, true) +
         celdaDato(p.causa, WCA, fill, false) +
         celdaDato(p.juzgado, WJU, fill, false) +
-        celdaDato(cond.d, WD, fill, true) +
-        celdaDato(cond.m, WM, fill, true) +
-        celdaDato(cond.a, WA, fill, true) +
-        celdaDato(asis.d, WD, fill, true) +
-        celdaDato(asis.m, WM, fill, true) +
-        celdaDato(asis.a, WA, fill, true) +
-        celdaDato(agot.d, WD, fill, true) +
-        celdaDato(agot.m, WM, fill, true) +
-        celdaDato(agot.a, WA, fill, true) +
+        (function(){
+          if (!cond.a && p.condicional && p.condicional.trim()) {
+            var w3 = WD+WM+WA;
+            return '<w:tc><w:tcPr><w:gridSpan w:val="3"/><w:tcW w:w="' + w3 + '" w:type="dxa"/>' +
+              '<w:shd w:val="clear" w:color="auto" w:fill="' + fill + '"/>' +
+              '<w:tcBorders>' + borde() + '</w:tcBorders>' +
+              '<w:vAlign w:val="center"/>' +
+              '<w:tcMar><w:top w:w="30" w:type="dxa"/><w:bottom w:w="30" w:type="dxa"/><w:left w:w="60" w:type="dxa"/><w:right w:w="60" w:type="dxa"/></w:tcMar>' +
+              '</w:tcPr><w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="0" w:after="0"/></w:pPr>' +
+              '<w:r><w:rPr><w:color w:val="000000"/><w:sz w:val="14"/><w:szCs w:val="14"/>' +
+              '<w:rFonts w:ascii="Arial" w:hAnsi="Arial"/></w:rPr>' +
+              '<w:t xml:space="preserve">' + esc(p.condicional.trim()) + '</w:t></w:r></w:p></w:tc>';
+          }
+          return celdaDato(cond.d, WD, fill, true) + celdaDato(cond.m, WM, fill, true) + celdaDato(cond.a, WA, fill, true);
+        })() +
+        (function(){
+          if (!asis.a && p.asistida && p.asistida.trim()) {
+            var w3 = WD+WM+WA;
+            return '<w:tc><w:tcPr><w:gridSpan w:val="3"/><w:tcW w:w="' + w3 + '" w:type="dxa"/>' +
+              '<w:shd w:val="clear" w:color="auto" w:fill="' + fill + '"/>' +
+              '<w:tcBorders>' + borde() + '</w:tcBorders>' +
+              '<w:vAlign w:val="center"/>' +
+              '<w:tcMar><w:top w:w="30" w:type="dxa"/><w:bottom w:w="30" w:type="dxa"/><w:left w:w="60" w:type="dxa"/><w:right w:w="60" w:type="dxa"/></w:tcMar>' +
+              '</w:tcPr><w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="0" w:after="0"/></w:pPr>' +
+              '<w:r><w:rPr><w:color w:val="000000"/><w:sz w:val="14"/><w:szCs w:val="14"/>' +
+              '<w:rFonts w:ascii="Arial" w:hAnsi="Arial"/></w:rPr>' +
+              '<w:t xml:space="preserve">' + esc(p.asistida.trim()) + '</w:t></w:r></w:p></w:tc>';
+          }
+          return celdaDato(asis.d, WD, fill, true) + celdaDato(asis.m, WM, fill, true) + celdaDato(asis.a, WA, fill, true);
+        })() +
+        (function(){
+          if (!agot.a && p.agotamiento && p.agotamiento.trim()) {
+            // Texto libre (Perpetua, Sin Pena Temporal, etc.) — celda con gridSpan 3
+            var w3 = WD+WM+WA;
+            return '<w:tc><w:tcPr><w:gridSpan w:val="3"/><w:tcW w:w="' + w3 + '" w:type="dxa"/>' +
+              '<w:shd w:val="clear" w:color="auto" w:fill="' + fill + '"/>' +
+              '<w:tcBorders>' + borde() + '</w:tcBorders>' +
+              '<w:vAlign w:val="center"/>' +
+              '<w:tcMar><w:top w:w="30" w:type="dxa"/><w:bottom w:w="30" w:type="dxa"/><w:left w:w="60" w:type="dxa"/><w:right w:w="60" w:type="dxa"/></w:tcMar>' +
+              '</w:tcPr><w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="0" w:after="0"/></w:pPr>' +
+              '<w:r><w:rPr><w:color w:val="000000"/><w:sz w:val="14"/><w:szCs w:val="14"/>' +
+              '<w:rFonts w:ascii="Arial" w:hAnsi="Arial"/></w:rPr>' +
+              '<w:t xml:space="preserve">' + esc(p.agotamiento.trim()) + '</w:t></w:r></w:p></w:tc>';
+          }
+          return celdaDato(agot.d, WD, fill, true) + celdaDato(agot.m, WM, fill, true) + celdaDato(agot.a, WA, fill, true);
+        })() +
         celdaDato((function(){var f=soloFecha(p.salida);return f.a?f.d+'/'+f.m+'/'+f.a:'';})(), WSA, fill, true) +
       '</w:tr>';
     }).join("");
