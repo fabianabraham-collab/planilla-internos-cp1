@@ -163,6 +163,7 @@ tbody td {
 .td-juz { min-width: 140px; font-size: 11px; }
 .td-fecha { text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; width: 38px; }
 .td-sal { text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; min-width: 80px; }
+.td-obs { min-width: 160px; max-width: 220px; font-size: 11px; color: #5A3E00; background: #FFFBE6; font-style: italic; }
 
 
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -239,6 +240,7 @@ tbody td {
           <th colspan="3">Libertad Asistida</th>
           <th colspan="3">Agotamiento de Pena</th>
           <th rowspan="2">Salida Transitoria</th>
+          <th rowspan="2" style="background:#7D6608;color:#FFFBE6;">Observaciones</th>
         </tr>
         <tr>
           <th>D</th><th>M</th><th>A</th>
@@ -247,7 +249,7 @@ tbody td {
         </tr>
       </thead>
       <tbody id="cuerpo">
-        <tr><td colspan="17" class="loading">Cargando datos desde Google Sheets...</td></tr>
+        <tr><td colspan="18" class="loading">Cargando datos desde Google Sheets...</td></tr>
       </tbody>
     </table>
   </div>
@@ -305,6 +307,7 @@ async function cargarDesdeSheets() {
         asistida:    (cols[6] || "").trim(),
         agotamiento: (cols[7] || "").trim(),
         salida:      (cols[8] || "").trim(),
+        observaciones: (cols[9] || "").trim(),
       });
     }
     if (nuevos.length > 0) {
@@ -349,7 +352,7 @@ function renderTabla(lista) {
   document.getElementById("estadoBar").textContent = `${lista.length} internos`;
 
   if (lista.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="17" class="loading">Sin datos. Agregá internos o sincronizá con Sheets.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="18" class="loading">Sin datos. Agregá internos o sincronizá con Sheets.</td></tr>';
     return;
   }
 
@@ -369,6 +372,7 @@ function renderTabla(lista) {
       ${!asis.a && p.asistida ? '<td class="td-fecha" colspan="3" style="text-align:center">' + p.asistida + '</td>' : '<td class="td-fecha">' + asis.d + '</td><td class="td-fecha">' + asis.m + '</td><td class="td-fecha">' + asis.a + '</td>'}
       ${!agot.a && p.agotamiento ? '<td class="td-fecha" colspan="3" style="text-align:center">' + p.agotamiento + '</td>' : '<td class="td-fecha">' + agot.d + '</td><td class="td-fecha">' + agot.m + '</td><td class="td-fecha">' + agot.a + '</td>'}
       <td class="td-sal">${p.salida || ""}</td>
+      <td class="td-obs">${p.observaciones || ""}</td>
     </tr>`;
   }).join("");
 }
