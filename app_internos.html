@@ -231,27 +231,22 @@ tbody td {
     <table id="tabla">
       <thead>
         <tr>
-          <th rowspan="2">N°</th>
-          <th rowspan="2">Legajo</th>
-          <th rowspan="2">Apellido y Nombre</th>
-          <th rowspan="2">DNI</th>
-          <th rowspan="2">Causa / Delito</th>
-          <th rowspan="2">Juzgado Interviniente</th>
-          <th rowspan="2">Condena</th>
-          <th colspan="3">Libertad Condicional</th>
-          <th colspan="3">Libertad Asistida</th>
-          <th colspan="3">Agotamiento de Pena</th>
-          <th rowspan="2">Salida Transitoria</th>
-          <th rowspan="2" style="background:#7D6608;color:#FFFBE6;">Observaciones</th>
-        </tr>
-        <tr>
-          <th>D</th><th>M</th><th>A</th>
-          <th>D</th><th>M</th><th>A</th>
-          <th>D</th><th>M</th><th>A</th>
+          <th>N°</th>
+          <th>Legajo</th>
+          <th>Apellido y Nombre</th>
+          <th>DNI</th>
+          <th>Causa / Delito</th>
+          <th>Juzgado Interviniente</th>
+          <th>Condena</th>
+          <th>Libertad Condicional</th>
+          <th>Libertad Asistida</th>
+          <th>Agotamiento de Pena</th>
+          <th>Salida Transitoria</th>
+          <th style="background:#7D6608;color:#FFFBE6;">Observaciones</th>
         </tr>
       </thead>
       <tbody id="cuerpo">
-        <tr><td colspan="20" class="loading">Cargando datos desde Google Sheets...</td></tr>
+        <tr><td colspan="12" class="loading">Cargando datos desde Google Sheets...</td></tr>
       </tbody>
     </table>
   </div>
@@ -356,7 +351,7 @@ function renderTabla(lista) {
   document.getElementById("estadoBar").textContent = `${lista.length} internos`;
 
   if (lista.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="20" class="loading">Sin datos. Agregá internos o sincronizá con Sheets.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="12" class="loading">Sin datos. Agregá internos o sincronizá con Sheets.</td></tr>';
     return;
   }
 
@@ -366,6 +361,7 @@ function renderTabla(lista) {
     const asis = parseFecha(p.asistida);
     const agot = parseFecha(p.agotamiento);
     const sal  = parseFecha(p.salida);
+    const fmtFecha = (f, raw) => f.a ? `${f.d}/${f.m}/${f.a}` : (raw ? raw.trim() : "");
     return `<tr>
       <td class="td-num">${i+1}</td>
       <td class="td-leg">${p.legajo || ""}</td>
@@ -374,9 +370,9 @@ function renderTabla(lista) {
       <td class="td-causa">${p.causa || ""}</td>
       <td class="td-juz">${p.juzgado || ""}</td>
       <td class="td-sal" style="min-width:110px">${p.condena || ""}</td>
-      ${!cond.a && p.condicional ? '<td class="td-fecha" colspan="3" style="text-align:center">' + p.condicional + '</td>' : '<td class="td-fecha">' + cond.d + '</td><td class="td-fecha">' + cond.m + '</td><td class="td-fecha">' + cond.a + '</td>'}
-      ${!asis.a && p.asistida ? '<td class="td-fecha" colspan="3" style="text-align:center">' + p.asistida + '</td>' : '<td class="td-fecha">' + asis.d + '</td><td class="td-fecha">' + asis.m + '</td><td class="td-fecha">' + asis.a + '</td>'}
-      ${!agot.a && p.agotamiento ? '<td class="td-fecha" colspan="3" style="text-align:center">' + p.agotamiento + '</td>' : '<td class="td-fecha">' + agot.d + '</td><td class="td-fecha">' + agot.m + '</td><td class="td-fecha">' + agot.a + '</td>'}
+      <td class="td-sal">${fmtFecha(cond, p.condicional)}</td>
+      <td class="td-sal">${fmtFecha(asis, p.asistida)}</td>
+      <td class="td-sal">${fmtFecha(agot, p.agotamiento)}</td>
       <td class="td-sal">${p.salida || ""}</td>
       <td class="td-obs">${p.observaciones || ""}</td>
     </tr>`;
