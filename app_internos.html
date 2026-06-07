@@ -234,8 +234,10 @@ tbody td {
           <th rowspan="2">N°</th>
           <th rowspan="2">Legajo</th>
           <th rowspan="2">Apellido y Nombre</th>
-          <th rowspan="2">Causa / Condena</th>
+          <th rowspan="2">DNI</th>
+          <th rowspan="2">Causa / Delito</th>
           <th rowspan="2">Juzgado Interviniente</th>
+          <th rowspan="2">Condena</th>
           <th colspan="3">Libertad Condicional</th>
           <th colspan="3">Libertad Asistida</th>
           <th colspan="3">Agotamiento de Pena</th>
@@ -249,7 +251,7 @@ tbody td {
         </tr>
       </thead>
       <tbody id="cuerpo">
-        <tr><td colspan="18" class="loading">Cargando datos desde Google Sheets...</td></tr>
+        <tr><td colspan="20" class="loading">Cargando datos desde Google Sheets...</td></tr>
       </tbody>
     </table>
   </div>
@@ -301,13 +303,15 @@ async function cargarDesdeSheets() {
       nuevos.push({
         legajo: (cols[1] || "").trim(),
         nombre: (cols[2] || "").trim(),
-        causa:  (cols[3] || "").trim(),
-        juzgado:(cols[4] || "").trim(),
-        condicional: (cols[5] || "").trim(),
-        asistida:    (cols[6] || "").trim(),
-        agotamiento: (cols[7] || "").trim(),
-        salida:      (cols[8] || "").trim(),
-        observaciones: (cols[9] || "").trim(),
+        dni:    (cols[3] || "").trim(),
+        causa:  (cols[4] || "").trim(),
+        juzgado:(cols[5] || "").trim(),
+        condena:(cols[6] || "").trim(),
+        condicional: (cols[7] || "").trim(),
+        asistida:    (cols[8] || "").trim(),
+        agotamiento: (cols[9] || "").trim(),
+        salida:      (cols[10] || "").trim(),
+        observaciones: (cols[11] || "").trim(),
       });
     }
     if (nuevos.length > 0) {
@@ -352,7 +356,7 @@ function renderTabla(lista) {
   document.getElementById("estadoBar").textContent = `${lista.length} internos`;
 
   if (lista.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="18" class="loading">Sin datos. Agregá internos o sincronizá con Sheets.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="20" class="loading">Sin datos. Agregá internos o sincronizá con Sheets.</td></tr>';
     return;
   }
 
@@ -366,8 +370,10 @@ function renderTabla(lista) {
       <td class="td-num">${i+1}</td>
       <td class="td-leg">${p.legajo || ""}</td>
       <td class="td-nom">${p.nombre || ""}</td>
+      <td class="td-fecha" style="min-width:80px;white-space:nowrap">${p.dni || ""}</td>
       <td class="td-causa">${p.causa || ""}</td>
       <td class="td-juz">${p.juzgado || ""}</td>
+      <td class="td-sal" style="min-width:110px">${p.condena || ""}</td>
       ${!cond.a && p.condicional ? '<td class="td-fecha" colspan="3" style="text-align:center">' + p.condicional + '</td>' : '<td class="td-fecha">' + cond.d + '</td><td class="td-fecha">' + cond.m + '</td><td class="td-fecha">' + cond.a + '</td>'}
       ${!asis.a && p.asistida ? '<td class="td-fecha" colspan="3" style="text-align:center">' + p.asistida + '</td>' : '<td class="td-fecha">' + asis.d + '</td><td class="td-fecha">' + asis.m + '</td><td class="td-fecha">' + asis.a + '</td>'}
       ${!agot.a && p.agotamiento ? '<td class="td-fecha" colspan="3" style="text-align:center">' + p.agotamiento + '</td>' : '<td class="td-fecha">' + agot.d + '</td><td class="td-fecha">' + agot.m + '</td><td class="td-fecha">' + agot.a + '</td>'}
@@ -383,7 +389,8 @@ function filtrar() {
   renderTabla(internos.filter(p =>
     (p.nombre || "").toLowerCase().includes(q) ||
     (p.legajo || "").toLowerCase().includes(q) ||
-    (p.causa || "").toLowerCase().includes(q)
+    (p.causa || "").toLowerCase().includes(q) ||
+    (p.dni || "").toLowerCase().includes(q)
   ));
 }
 
